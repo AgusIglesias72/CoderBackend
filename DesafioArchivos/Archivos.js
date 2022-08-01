@@ -1,5 +1,4 @@
 const fs = require("fs/promises");
-const { type } = require("os");
 
 class Productos {
   constructor(archivo) {
