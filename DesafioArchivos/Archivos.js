@@ -94,13 +94,13 @@ class Productos {
 const productos = new Productos("products.txt");
 
 const main = async () => {
-  // console.log(productos.archivo);
-  // console.log(await productos.getAll());
-  // await productos.save({ nombre: "Buzo", precio: 100 });
-  // await productos.update(1, { nombre: "Alfombra Actualizada", precio: 600 });
-  // console.log(await productos.getById(2));
-  // await productos.deleteAll();
-  // await productos.deleteById(1);
+  console.log(productos.archivo);
+  console.log(await productos.getAll());
+  await productos.save({ nombre: "Buzo", precio: 100 });
+  await productos.update(1, { nombre: "Alfombra Actualizada", precio: 600 });
+  console.log(await productos.getById(2));
+  await productos.deleteAll();
+  await productos.deleteById(1);
 };
 
 main();
