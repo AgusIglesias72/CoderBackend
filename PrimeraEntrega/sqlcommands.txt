@@ -1,0 +1,129 @@
+DROP TABLE IF EXISTS stores CASCADE;
+DROP TABLE IF EXISTS products CASCADE;
+DROP TABLE IF EXISTS ship_cart CASCADE;
+DROP TABLE IF EXISTS ship_cart_items CASCADE;
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+SELECT uuid_generate_v4();
+
+
+CREATE Table stores (
+	id serial,
+	name varchar(100) NOT NULL, 
+description varchar(350),
+	date_created DATE NOT NULL DEFAULT CURRENT_DATE,
+	PRIMARY KEY (id)
+);
+
+CREATE Table products (
+	id serial, 
+	title varchar(100) NOT NULL,
+	description varchar(350),
+   	store_id INT NOT NULL,
+	price FLOAT NOT NULL, 	
+	PRIMARY KEY (id),
+	CONSTRAINT fk_store
+      FOREIGN KEY(store_id) 
+	  REFERENCES stores(id)
+	  ON DELETE CASCADE
+);
+
+CREATE table ship_cart (
+	id uuid DEFAULT uuid_generate_v4(),
+    date_created DATE NOT NULL DEFAULT CURRENT_DATE,
+   	store_id INT NOT NULL,
+	PRIMARY KEY (id),
+		CONSTRAINT fk_store
+      FOREIGN KEY(store_id) 
+	  REFERENCES stores(id)
+	  ON DELETE CASCADE
+);
+
+CREATE table ship_cart_items (
+	ship_cart_id uuid NOT NULL,
+	product_id INT not null,
+    quantity INT DEFAULT 1,
+	CONSTRAINT fk_ship_cart
+      FOREIGN KEY(ship_cart_id) 
+	  REFERENCES ship_cart(id)
+	  ON DELETE CASCADE,
+	CONSTRAINT fk_products_id
+      FOREIGN KEY(product_id) 
+	  REFERENCES products(id)
+	  ON DELETE CASCADE
+);
+
+INSERT INTO stores (name, description)
+	VALUES ('velas', 'novelas');
+
+INSERT INTO Products (title, description, store_id, price)
+	VALUES ('hola', 'oprobando', 1, 3500);
+	
+INSERT INTO ship_cart (store_id)
+	VALUES (1);
+
+SELECT * from ship_Cart
+	
+insert into ship_cart_items (ship_cart_id, product_id)
+	Values('5810f2ad-7a59-482c-972d-7edc8d168285',2);
+	
+SELECT * FROM ship_cart_items;
+
+
+SELECT sc.id as id_carrito, sc.date_created, p.id as id_prod, MAX(p.price), SUM(p.price) as precio_total, SUM(p.quantity) as cantidad
+	FROM ship_cart AS sc
+	JOIN (SELECT sci.ship_cart_id, pr.id, pr.price, sci.quantity
+		 FROM ship_cart_items as sci
+		 JOIN products as pr ON sci.product_id = pr.id
+		 ) AS p
+	ON sc.id = p.ship_cart_id
+	GROUP BY p.id, sc.id
+	
+
+SELECT main.id_carrito, json_build_object(
+	'id', main.date_created,
+	'total_price', main.precio_total
+	)
+	FROM(
+		SELECT sc.id as id_carrito, sc.date_created, p.id as id_prod, MAX(p.price), SUM(p.price) as precio_total, SUM(p.quantity) as cantidad
+	FROM ship_cart AS sc
+	JOIN (SELECT sci.ship_cart_id, pr.id, pr.price, sci.quantity
+		 FROM ship_cart_items as sci
+		 JOIN products as pr ON sci.product_id = pr.id
+		 ) AS p
+	ON sc.id = p.ship_cart_id
+	GROUP BY p.id, sc.id 
+	) AS main
+
+SELECT grouped.id_carrito, JSON_agg(grouped.jsonobj) 
+	FROM(
+		SELECT main.id_carrito, json_build_object(
+		'id', main.date_created,
+		'total_price', main.precio_total
+		) as jsonobj
+		FROM(
+			SELECT sc.id as id_carrito, sc.date_created, p.id as id_prod, MAX(p.price), SUM(p.price) as precio_total, SUM(p.quantity) as cantidad
+			FROM ship_cart AS sc
+			JOIN (SELECT sci.ship_cart_id, pr.id, pr.price, sci.quantity
+		 		FROM ship_cart_items as sci
+		 		JOIN products as pr ON sci.product_id = pr.id
+		 		) AS p
+			ON sc.id = p.ship_cart_id
+			GROUP BY p.id, sc.id 
+		) AS main
+	) AS grouped
+	GROUP BY grouped.id_carrito;
+
+SELECT json_object_agg(json_object_agg('price', price))
+FROM products;
+
+
+INSERT INTO stores (name, description)
+	VALUES (
+	'Tienda de Prueba', 'probando tienda'
+	);
+
+INSERT INTO products (title, description, store_id, price)
+	VALUES(
+		'Vela','probando post', 1, 2099
+	);
